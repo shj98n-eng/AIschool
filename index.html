@@ -118,7 +118,7 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0; padding: 0; min-height: 100vh; color: #333;
             display: flex; flex-direction: column; align-items: center;
-            background-image: url('https://raw.githubusercontent.com/shj98n-eng/Alschool/main/BackGround.PNG'); 
+            background-image: url('BackGround.png'); 
             background-size: cover; background-position: center;
             background-attachment: fixed; background-repeat: no-repeat;
         }
@@ -304,7 +304,7 @@
 
     <div class="main-container">
         <div class="logo-container">
-            <img src="https://raw.githubusercontent.com/shj98n-eng/Alschool/main/Logo.PNG" alt="شعار المدرسة" onerror="this.style.display='none';">
+            <img src="Logo.png" alt="شعار المدرسة" onerror="this.style.display='none';">
         </div>
 
         <h1>بوابة الإدارة المدرسية الرقمية</h1>
@@ -340,8 +340,8 @@
                 <h3>دع إنجازاتنا تحكي</h3>
             </a>
             <a class="icon-card" href="https://www.mas1423.com/index.html" target="_blank">
-                <span class="emoji">📋</span>
-                <h3>سجل الإشراف</h3>
+                <span class="emoji">💡</span>
+                <h3>سجل الإرشاد</h3>
             </a>
         </div>
     </div>
@@ -482,6 +482,7 @@
             if(isAdminAuthenticated && document.getElementById('admin-staff-editor-container')) renderStaffAdminEditor();
         });
         
+        // ربط حي وفوري لتحديثات المناوبة والأرشيف والنشط
         database.ref('dutyArchives').on('value', (snapshot) => {
             dutyArchives = snapshot.exists() ? snapshot.val() : { "default_week": { title: "سجل المناوبة اليومية المدرسية", cells: {} } };
             if(document.getElementById('duty-display-area')) openDutyModal();
@@ -556,7 +557,7 @@
         }
 
         // ========================================================
-        // 1. سجل المناوبة اليومية
+        // 1. سجل المناوبة اليومية (تحديث فوري وحي دون تحديث الصفحة)
         // ========================================================
         function openDutyModal() {
             activeSection = 'duty';
@@ -655,13 +656,14 @@
             });
 
             database.ref(`dutyArchives/${currentActiveDutyId}/cells`).set(updatedCells).then(() => {
-                alert("تم حفظ ونشر جدول المناوبة بنجاح وتحديثه فوراً للجميع ✅");
+                alert("تم حفظ ونشر جدول المناوبة بنجاح وتم تحديثه فوراً للجميع ✅");
             });
         }
 
         function switchActiveDutyTable(tableKey) {
             if(!isAdminAuthenticated) return;
             database.ref('currentActiveDutyId').set(tableKey).then(() => {
+                // تحديث الشاشة فوراً عند التبديل بين الجداول
                 openDutyModal();
             });
         }
@@ -1027,7 +1029,7 @@
             let topHeaderButtons = `
                 <div style="text-align:left; display:flex; justify-content:flex-end; gap:8px;">
                     <button class="edit-btn-top" onclick="closeModal()" title="العودة للصفحة الرئيسية">🏠</button>
-                    <button class="edit-btn-top" onclick="verifyAdminAction()" title="تسجيل دخول الأدمن">⚙️️</button>
+                    <button class="edit-btn-top" onclick="verifyAdminAction()" title="تسجيل دخول الأدمن">⚙️</button>
                 </div>`;
 
             let html = `
@@ -1339,7 +1341,7 @@
             let displayArea = document.getElementById('permission-display-area'); if(!displayArea) return; displayArea.innerHTML = '';
             let keys = Object.keys(dbPermission); if(keys.length === 0) { displayArea.innerHTML = `<p style="text-align:center; color:#7f8c8d; padding:20px;">لا توجد كشوفات استئذان منشورة.</p>`; return; }
             keys.reverse().forEach((key) => {
-                let kashf = dbPermission[key]; let tableRows = />;
+                let kashf = dbPermission[key]; let tableRows = '';
                 if(kashf.list) { kashf.list.forEach((item) => { tableRows += `<tr><td style="font-weight:bold; color:var(--dark-navy);">${item.name || '---'}</td><td>${item.time || '---'}</td></tr>`; }); }
                 displayArea.innerHTML += `<div style="margin-bottom:40px; border-bottom:2px dashed #ccc; padding-bottom:20px;"><div class="info-box"><p style="margin:0; font-size:16px;">📅 <strong>كشف بيان استئذان منسوبي المدرسة ليوم:</strong> ${kashf.date || '---'} هـ</p></div><div class="table-scroll-container"><table><thead><tr><th>الاسم</th><th>توقيت الاستئذان</th></tr></thead><tbody>${tableRows}</tbody></table></div></div>`;
             });
