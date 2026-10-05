@@ -1,0 +1,1362 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>بوابة الإدارة المدرسية الرقمية</title>
+    
+    <!-- مكتبات Firebase للتعامل مع Realtime Database -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
+    <style>
+        :root {
+            --dark-navy: #001f3f; 
+            --gold: #c5a059; 
+            --white: #ffffff; 
+            --light-bg: #f8f9fa;
+        }
+
+        /* --- تصميم الشريط المتحرك العلوي الاحترافي المستمر --- */
+        .marquee-container {
+            background: rgba(0, 31, 63, 0.9);
+            border-bottom: 2px solid var(--gold);
+            color: white;
+            padding: 12px 15px;
+            width: 100%;
+            position: relative;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+        .marquee-content {
+            width: 100%;
+            overflow: hidden;
+            white-space: nowrap;
+            position: relative;
+        }
+        
+        .marquee-text-animated {
+            display: inline-block;
+            white-space: nowrap;
+            font-size: 1.1rem;
+            font-weight: 500;
+            padding-right: 100%;
+            animation: marqueeAnimation 22s linear infinite;
+        }
+
+        @keyframes marqueeAnimation {
+            0% { transform: translateX(0%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .admin-settings-icon {
+            background: rgba(197, 160, 89, 0.2);
+            border: 1px solid var(--gold);
+            color: var(--gold);
+            padding: 5px 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            margin-right: 15px;
+            transition: 0.2s;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            white-space: nowrap;
+            z-index: 5;
+        }
+        .admin-settings-icon:hover {
+            background: var(--gold);
+            color: var(--dark-navy);
+        }
+
+        .secret-admin-trigger {
+            position: fixed;
+            bottom: 10px;
+            left: 10px;
+            background: transparent;
+            border: none;
+            color: rgba(255, 255, 255, 0.2);
+            font-size: 10px;
+            cursor: pointer;
+            z-index: 9999;
+            transition: 0.3s;
+        }
+        .secret-admin-trigger:hover {
+            color: var(--gold);
+        }
+
+        .color-palette-container {
+            display: grid;
+            grid-template-columns: repeat(6, 40px);
+            gap: 10px;
+            margin: 15px 0;
+            justify-content: center;
+        }
+        .color-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid #ccc;
+            cursor: pointer;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+        .color-circle:hover {
+            transform: scale(1.1);
+            border-color: var(--dark-navy);
+        }
+        .color-circle.selected {
+            border: 3px solid var(--dark-navy);
+            box-shadow: 0 0 8px rgba(0,0,0,0.4);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0; padding: 0; min-height: 100vh; color: #333;
+            display: flex; flex-direction: column; align-items: center;
+            background-image: url('BackGround.png'); 
+            background-size: cover; background-position: center;
+            background-attachment: fixed; background-repeat: no-repeat;
+        }
+
+        .body-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.4); z-index: -1;
+        }
+
+        .main-container { 
+            width: 90%; 
+            max-width: 1200px; 
+            padding: 40px 0 50px 0; 
+            z-index: 1; 
+            position: relative; 
+        }
+        
+        .logo-container {
+            position: absolute;
+            top: 40px;   
+            right: 0; 
+        }
+        .logo-container img {
+            width: 100px;  
+            height: auto;
+            display: block;
+        }
+
+        h1 { 
+            color: white; 
+            text-shadow: 2px 2px 8px rgba(0,0,0,0.6); 
+            margin-top: 20px; 
+            margin-bottom: 15px; 
+            font-size: 2.8rem; 
+            text-align: center;
+        }
+
+        .admin-header-signature {
+            text-align: center;
+            margin-bottom: 50px;
+            color: #f1f2f6;
+            font-size: 1.2rem;
+            font-weight: 500;
+            text-shadow: 1px 1px 4px rgba(0,0,0,0.3);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 40px;
+        }
+        .admin-header-signature b {
+            color: #001f3f; 
+            font-weight: bold;
+            text-shadow: none; 
+        }
+
+        .grid-container { 
+            display: grid; 
+            grid-template-columns: repeat(6, 1fr); 
+            gap: 25px; 
+            max-width: 1050px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .grid-container .icon-card { 
+            grid-column: span 2; 
+        }
+
+        .icon-card {
+            background: rgba(255, 255, 255, 0.95); border-radius: 15px; padding: 35px 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.4); cursor: pointer;
+            transition: transform 0.3s ease, background 0.3s ease, box-shadow 0.3s ease;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            border: 1px solid rgba(255,255,255,0.6);
+            text-decoration: none;
+        }
+        .icon-card:hover { transform: translateY(-8px); background: #ffffff; box-shadow: 0 15px 35px rgba(0,0,0,0.5); }
+        .icon-card .emoji { font-size: 3.5rem; margin-bottom: 15px; }
+        .icon-card h3 { margin: 0; color: var(--dark-navy); font-size: 1.4rem; text-align: center; }
+
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); justify-content: center; align-items: center; z-index: 1000; backdrop-filter: blur(5px); }
+        .modal-content { background: white; padding: 40px; border-radius: 15px; width: 90%; max-width: 1250px; max-height: 85vh; overflow-y: auto; position: relative; box-shadow: 0 10px 30px rgba(0,0,0,0.6); z-index: 1010; }
+        .close-btn { position: absolute; top: 15px; left: 15px; font-size: 2.2rem; cursor: pointer; color: #bdc3c7; z-index: 1020; }
+        .close-btn:hover { color: #e74c3c; }
+
+        .info-box { text-align: right; background: #f1f2f6; padding: 15px 20px; border-radius: 8px; margin-bottom: 20px; border-right: 5px solid var(--dark-navy); position: relative; color: var(--dark-navy); }
+        .table-scroll-container { max-height: 500px; overflow-y: auto; overflow-x: auto; background: white; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border: 1px solid #edf2f7; margin-bottom: 25px; }
+        
+        table { width: 100%; border-collapse: collapse; min-width: 850px; margin-bottom: 10px; }
+        th, td { border: 1px solid #cbd5e0; padding: 12px; text-align: center; font-size: 14px; }
+        th { background: #2980b9; color: white; position: sticky; top: 0; z-index: 10; font-size: 15px; }
+        tr:nth-child(even) { background-color: var(--light-bg); }
+
+        td b, .admin-group strong, .admin-teachers-list-view span strong {
+            color: var(--dark-navy) !important;
+        }
+
+        .edit-btn-top { background: var(--dark-navy); color: var(--gold); border: 1px solid var(--gold); padding: 8px 14px; border-radius: 50%; cursor: pointer; font-weight: bold; font-size: 1.2rem; margin-bottom: 15px; transition: 0.2s; display: inline-block; }
+        .edit-btn-top:hover { background: var(--gold); color: var(--dark-navy); }
+        
+        .input-field { width: 100%; padding: 8px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 13px; margin-top: 4px; box-sizing: border-box; text-align: center; background: #fff; }
+        
+        .class-nav-btn { 
+            background: var(--dark-navy); 
+            color: white; 
+            border: none; 
+            padding: 10px 18px; 
+            margin: 5px; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            width: auto; 
+        }
+        #teachers-buttons-area .class-nav-btn {
+            background: #e1effa !important; 
+            color: var(--dark-navy) !important; 
+            border: 1px solid #b3d4f2 !important;
+        }
+        .class-nav-btn:hover { background: var(--gold) !important; color: var(--dark-navy) !important; }
+        
+        .section-subtitle { 
+            color: var(--dark-navy); 
+            border-bottom: none !important; 
+            padding-bottom: 5px; 
+            margin-top: 25px; 
+            font-size: 1.3rem; 
+        }
+
+        .admin-panel { background: #fffaf0; border: 2px solid var(--gold); padding: 20px; border-radius: 12px; margin-bottom: 25px; text-align: right; }
+        .btn-confirm { background: #27ae60; color: white; border: none; padding: 12px 30px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 16px; margin: 10px 5px; display: inline-block; }
+        .btn-confirm:hover { background: #219653; }
+        .btn-add { background: #2980b9; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; margin: 5px; }
+        .btn-delete-group { background: #e74c3c; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; margin: 5px; }
+        
+        .activity-badge { background: #e74c3c; color: white; padding: 3px 10px; border-radius: 4px; font-size: 13px; display: inline-block; margin-top: 4px; font-weight: bold;}
+        .quota-badge { background: #8e44ad; color: white; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; display: inline-block; }
+
+        @media screen and (max-width: 768px) {
+            h1 { font-size: 1.9rem; margin-bottom: 15px; margin-top: 80px; }
+            .logo-container { top: 15px; left: 50%; transform: translateX(-50%); right: auto; }
+            .logo-container img { width: 80px; }
+
+            .admin-header-signature {
+                font-size: 1rem;
+                flex-direction: column;
+                line-height: 2.2;
+                margin-bottom: 35px;
+                padding: 0 10px;
+                gap: 12px;
+            }
+
+            .grid-container { 
+                grid-template-columns: 1fr !important; 
+                gap: 15px; 
+                width: 100%;
+                padding: 0 10px;
+                box-sizing: border-box;
+            }
+            .grid-container .icon-card { 
+                grid-column: span 1 !important; 
+                padding: 25px 15px;
+                border-radius: 12px;
+            }
+            .icon-card .emoji { font-size: 2.8rem; }
+            .icon-card h3 { font-size: 1.2rem; }
+
+            .modal-content { width: 95%; padding: 20px 15px; border-radius: 10px; }
+        }
+    </style>
+</head>
+<body>
+
+    <button class="secret-admin-trigger" onclick="triggerAdminLogin()" title="تسجيل دخول الأدمن">⚙️ الإدارة</button>
+
+    <div class="marquee-container">
+        <div class="marquee-content">
+            <div id="announcement-marquee-text" class="marquee-text-animated">أهلاً بكم في بوابة الإدارة المدرسية الرقمية - جاري تحميل التنبيهات...</div>
+        </div>
+        <button id="marquee-admin-btn" class="admin-settings-icon" onclick="openMarqueeAdminModal()" title="إعدادات الشريط">⚙️ إعدادات الشريط</button>
+    </div>
+
+    <div class="body-overlay"></div>
+
+    <div class="main-container">
+        <div class="logo-container">
+            <img src="Logo.png" alt="شعار المدرسة" onerror="this.style.display='none';">
+        </div>
+
+        <h1>بوابة الإدارة المدرسية الرقمية</h1>
+        
+		<div class="admin-header-signature">
+            <span>إعداد وتنفيذ: <b>أ. جواهر الحميدي</b></span>
+            <span>إشراف مديرة المدرسة: <b>أ. الجوهرة المطيري</b></span>
+        </div>
+
+        <div class="grid-container">
+            <a class="icon-card" href="https://shj98n-eng.github.io/school-reserve1/" target="_blank">
+                <span class="emoji">📝</span>
+                <h3>سجل الاحتياط</h3>
+            </a>
+            <div class="icon-card" onclick="activeSection='permission'; openPermissionModal()">
+                <span class="emoji">🚪</span>
+                <h3>سجل الاستئذان</h3>
+            </div>
+            <div class="icon-card" onclick="activeSection='classes'; openClassesMenu()">
+                <span class="emoji">📅</span>
+                <h3>جدول الحصص للفصول</h3>
+            </div>
+            <div class="icon-card" onclick="activeSection='staff'; openStaffMenu()">
+                <span class="emoji">👥</span>
+                <h3>الطاقم التعليمي والإداري</h3>
+            </div>
+            <div class="icon-card" onclick="activeSection='duty'; openDutyModal()">
+                <span class="emoji">🚨</span>
+                <h3>سجل المناوبة اليومية</h3>
+            </div>
+            <a class="icon-card" href="http://padlet.com/t9463436/padlet-ur0hx4knfmb5u3tt" target="_blank">
+                <span class="emoji">🌟</span>
+                <h3>دع إنجازاتنا تحكي</h3>
+            </a>
+            <!-- تم التعديل إلى سجل الإشراف مع الحفاظ على الرابط -->
+            <a class="icon-card" href="https://www.mas1423.com/index.html" target="_blank">
+                <span class="emoji">📋</span>
+                <h3>سجل الإشراف</h3>
+            </a>
+        </div>
+    </div>
+
+    <div id="systemModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal()">&times;</span>
+            <div id="modalBody"></div>
+        </div>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBE677Db_FVTG4bkI-xg08usJIkvCj6Ypc",
+            authDomain: "aischool-7354f.firebaseapp.com",
+            databaseURL: "https://aischool-7354f-default-rtdb.firebaseio.com",
+            projectId: "aischool-7354f",
+            storageBucket: "aischool-7354f.firebasestorage.app",
+            messagingSenderId: "579099616495",
+            appId: "1:579099616495:web:c1d80c36f8dd262d99671a",
+            measurementId: "G-E88LRYET19"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        const PASS = "edu99";
+        let isAdminAuthenticated = false; 
+        let activeSection = ''; 
+        
+        let dbPermission = {}; 
+        let dbClasses = {}; 
+        let dbStaff = [];    
+        let dutyArchives = {}; 
+        let currentActiveDutyId = "default_week"; 
+        let dbTeachersList = {}; 
+
+        const DAYS_NAMES = ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس"];
+        const DUTY_TIMES = ["الصباح بنين", "الصباح بنات", "فسحة البنات", "فسحة البنين أولية", "فسحة البنين العليا", "الخروج بنين", "الخروج بنات"];
+
+        const allowedColors = [
+            "#ffffff", "#f1f2f6", "#ffd700", "#ff4757", 
+            "#2ed573", "#1e90ff", "#ffa502", "#9b59b6", 
+            "#00cec9", "#ff6b81", "#70a1ff", "#eccc68"
+        ];
+        let selectedAdminColor = "#f1f2f6";
+
+        database.ref('announcementData').on('value', (snapshot) => {
+            let data = snapshot.val() || { text: "أهلاً بكم في بوابة الإدارة المدرسية الرقمية - يرجى متابعة التنبيهات المستمرة.", color: "#f1f2f6" };
+            let marqueeEl = document.getElementById('announcement-marquee-text');
+            if(marqueeEl) {
+                marqueeEl.innerText = data.text || "";
+                marqueeEl.style.color = data.color || "#f1f2f6";
+            }
+        });
+
+        function triggerAdminLogin() {
+            let p = prompt("أدخل كلمة سر الإدارة:");
+            if(p === PASS) {
+                isAdminAuthenticated = true;
+                let adminMarqueeBtn = document.getElementById('marquee-admin-btn');
+                if(adminMarqueeBtn) adminMarqueeBtn.style.display = 'flex';
+                alert("تم تسجيل دخول الأدمن بنجاح ✅");
+                if (activeSection === 'duty') openDutyModal();
+            } else if(p !== null) {
+                alert("كلمة السر خاطئة!");
+            }
+        }
+
+        function openMarqueeAdminModal() {
+            if(!isAdminAuthenticated) return;
+            modal.style.display = 'flex';
+            let currentText = document.getElementById('announcement-marquee-text').innerText;
+            
+            let circlesHtml = '';
+            allowedColors.forEach(col => {
+                let isSel = (col === selectedAdminColor) ? 'selected' : '';
+                circlesHtml += `<div class="color-circle ${isSel}" style="background-color: ${col};" onclick="selectColor('${col}')" data-color="${col}"></div>`;
+            });
+
+            modalBody.innerHTML = `
+                <div class="admin-panel" style="text-align:center;">
+                    <h3>⚙️ إعدادات الشريط المتحرك المستمر</h3>
+                    <div style="margin-bottom:15px; text-align:right;">
+                        <label><strong>نص التنبيه:</strong></label>
+                        <input type="text" id="admin-marquee-input" class="input-field" value="${currentText}">
+                    </div>
+                    <div style="margin-bottom:15px; text-align:right;">
+                        <label><strong>اختر لون الخط (12 لوناً):</strong></label>
+                        <div class="color-palette-container" id="palette-grid">
+                            ${circlesHtml}
+                        </div>
+                    </div>
+                    <button class="btn-confirm" onclick="saveMarqueeSettings()">حفظ ونشر التعديلات ✅</button>
+                </div>
+            `;
+        }
+
+        function selectColor(colorHex) {
+            selectedAdminColor = colorHex;
+            let circles = document.querySelectorAll('.color-circle');
+            circles.forEach(c => {
+                if(c.getAttribute('data-color') === colorHex) {
+                    c.classList.add('selected');
+                } else {
+                    c.classList.remove('selected');
+                }
+            });
+        }
+
+        function saveMarqueeSettings() {
+            let txt = document.getElementById('admin-marquee-input').value.trim();
+            if(!txt) return alert("الرجاء كتابة نص التنبيه!");
+
+            database.ref('announcementData').set({
+                text: txt,
+                color: selectedAdminColor
+            }).then(() => {
+                alert("تم تحديث وحفظ إعدادات الشريط بنجاح ✅");
+                closeModal();
+            });
+        }
+
+        database.ref('livePermissionData').on('value', (snapshot) => { dbPermission = snapshot.exists() ? snapshot.val() : {}; });
+        database.ref('teachersDataList').on('value', (snapshot) => { 
+            dbTeachersList = snapshot.val() || {}; 
+            validateTeachersScheduleStructure();
+            if(document.getElementById('teachers-buttons-area')) renderTeachersButtons(); 
+            if(isAdminAuthenticated && document.getElementById('admin-teachers-list-view')) renderAdminTeachersListView();
+        });
+        database.ref('schoolClasses').on('value', (snapshot) => { 
+            dbClasses = snapshot.val() || {}; 
+            if(document.getElementById('classes-buttons-area')) { renderClassesMenuButtons(); renderTeachersButtons(); } 
+            if(isAdminAuthenticated && document.getElementById('admin-class-editor-area')) renderClassesAdminEditor();
+        });
+        database.ref('schoolStaff').on('value', (snapshot) => { 
+            dbStaff = snapshot.val() || []; 
+            if(document.getElementById('staff-table-body')) renderStaffTableRows(); 
+            if(isAdminAuthenticated && document.getElementById('admin-staff-editor-container')) renderStaffAdminEditor();
+        });
+        
+        database.ref('dutyArchives').on('value', (snapshot) => {
+            dutyArchives = snapshot.exists() ? snapshot.val() : { "default_week": { title: "سجل المناوبة اليومية المدرسية", cells: {} } };
+            if(document.getElementById('duty-display-area')) openDutyModal();
+        });
+
+        database.ref('currentActiveDutyId').on('value', (snapshot) => {
+            currentActiveDutyId = snapshot.exists() ? snapshot.val() : "default_week";
+            if(document.getElementById('duty-display-area')) openDutyModal();
+        });
+
+        const modal = document.getElementById('systemModal');
+        const modalBody = document.getElementById('modalBody');
+
+        function verifyAdminAction() {
+            if(isAdminAuthenticated) {
+                if (activeSection === 'duty') openDutyModal();
+                else if (activeSection === 'classes') openClassesMenu();
+                else if (activeSection === 'staff') openStaffMenu();
+                else if (activeSection === 'permission') openPermissionModal();
+            } else {
+                let p = prompt("أدخل كلمة السر للدخول للوحة التحكم:");
+                if(p === PASS) { 
+                    isAdminAuthenticated = true; 
+                    let adminMarqueeBtn = document.getElementById('marquee-admin-btn');
+                    if(adminMarqueeBtn) adminMarqueeBtn.style.display = 'flex';
+                    if (activeSection === 'duty') openDutyModal();
+                    else if (activeSection === 'classes') openClassesMenu();
+                    else if (activeSection === 'staff') openStaffMenu();
+                    else if (activeSection === 'permission') openPermissionModal();
+                } else if (p !== null) { 
+                    alert("كلمة السر خاطئة!"); 
+                }
+            }
+        }
+
+        function printElementContent(elementId) {
+            let content = document.getElementById(elementId).innerHTML;
+            let printWindow = window.open('', '', 'height=900,width=1400');
+            printWindow.document.write('<html><head><title>طباعة الكشف الرسمي للمدرسة</title>');
+            printWindow.document.write('<style>');
+            printWindow.document.write('@page { size: landscape; margin: 15mm; }');
+            printWindow.document.write('body { font-family: "Segoe UI", Tahoma, sans-serif; direction: rtl; padding: 20px; background: white; color: black; }');
+            printWindow.document.write('table { width: 100%; border-collapse: collapse; margin-top: 20px; page-break-inside: avoid; }');
+            printWindow.document.write('th, td { border: 2px solid #000000; padding: 14px 10px; text-align: center; font-size: 14pt; color: black; line-height: 1.5; }');
+            printWindow.document.write('th { background-color: #eaeded !important; font-weight: bold; font-size: 15pt; color: #000; }');
+            printWindow.document.write('.no-print, button, select, input, .close-btn, .edit-btn-top { display: none !important; }');
+            printWindow.document.write('</style></head><body>');
+            printWindow.document.write(content);
+            printWindow.document.write('</body></html>');
+            printWindow.document.close();
+            printWindow.focus();
+            setTimeout(() => { printWindow.print(); printWindow.close(); }, 600);
+        }
+
+        function validateTeachersScheduleStructure() {
+            let updated = false;
+            Object.keys(dbTeachersList).forEach(tName => {
+                if (!dbTeachersList[tName].schedule || dbTeachersList[tName].schedule.length < 5) {
+                    dbTeachersList[tName].schedule = Array.from({ length: 5 }, () => Array(6).fill("فراغ"));
+                    updated = true;
+                }
+                for(let i=0; i<5; i++) {
+                    if(!dbTeachersList[tName].schedule[i] || dbTeachersList[tName].schedule[i].length < 6) {
+                        dbTeachersList[tName].schedule[i] = Array(6).fill("فراغ");
+                        updated = true;
+                    }
+                }
+                dbTeachersList[tName].schedule[4][4] = "نشاط";
+                dbTeachersList[tName].schedule[4][5] = "نشاط";
+            });
+            if(updated) { database.ref('teachersDataList').set(dbTeachersList); }
+        }
+
+        // ========================================================
+        // 1. سجل المناوبة اليومية
+        // ========================================================
+        function openDutyModal() {
+            activeSection = 'duty';
+            modal.style.display = 'flex';
+            
+            let topHeaderButtons = `
+                <div style="text-align:left; display:flex; justify-content:flex-end; gap:8px;" class="no-print">
+                    <button class="edit-btn-top" onclick="closeModal()" title="العودة للصفحة الرئيسية">🏠</button>
+                    <button class="edit-btn-top" onclick="verifyAdminAction()" title="تسجيل دخول الأدمن">⚙️</button>
+                </div>`;
+
+            let adminDutyControls = '';
+            if (isAdminAuthenticated) {
+                let optionsHtml = '';
+                Object.keys(dutyArchives).forEach(key => {
+                    let dTitle = dutyArchives[key].title || "سجل المناوبة اليومية المدرسية";
+                    let isSel = (key === currentActiveDutyId) ? 'selected' : '';
+                    optionsHtml += `<option value="${key}" ${isSel}>${dTitle}</option>`;
+                });
+
+                adminDutyControls = `
+                    <div class="admin-panel no-print" style="margin-bottom:20px; display:flex; flex-wrap:wrap; gap:15px; align-items:center; justify-content:space-between;">
+                        <div>
+                            <label><strong>اختر الجدول المعروض / المؤرشف:</strong></label>
+                            <select class="input-field" style="width:230px; display:inline-block; margin-right:8px;" onchange="switchActiveDutyTable(this.value)">
+                                ${optionsHtml}
+                            </select>
+                        </div>
+                        <div>
+                            <button class="btn-add" style="margin:0;" onclick="createNewDutyTable()">➕ إضافة جدول جديد للأرشيف</button>
+                            <button class="btn-delete-group" style="position:static; margin-right:5px;" onclick="deleteCurrentDutyTable()">🗑️ حذف هذا الجدول</button>
+                        </div>
+                    </div>
+                `;
+            }
+
+            let activeTableObj = dutyArchives[currentActiveDutyId] || { cells: {} };
+            let tableHeader = `<tr><th style="background:#001f3f; color:white; width:130px;">الوقت / اليوم</th>`;
+            DAYS_NAMES.forEach(day => { tableHeader += `<th>${day}</th>`; });
+            tableHeader += `</tr>`;
+
+            let tableRows = '';
+            DUTY_TIMES.forEach((timeStr, tIdx) => {
+                tableRows += `<tr><td style="background:#f1f2f6; font-weight:bold; color:var(--dark-navy);">${timeStr}</td>`;
+                DAYS_NAMES.forEach((dayStr, dIdx) => {
+                    let cellKey = `t_${tIdx}_d_${dIdx}`;
+                    let cellValue = (activeTableObj.cells && activeTableObj.cells[cellKey]) ? activeTableObj.cells[cellKey] : '';
+
+                    if (isAdminAuthenticated) {
+                        tableRows += `<td><input type="text" id="duty_cell_${cellKey}" class="input-field" value="${cellValue}" placeholder="اسم المعلمة"></td>`;
+                    } else {
+                        tableRows += `<td style="font-weight:600; color:#2c3e50;">${cellValue || '---'}</td>`;
+                    }
+                });
+                tableRows += `</tr>`;
+            });
+
+            let adminActionButtons = isAdminAuthenticated ? `
+                <div style="text-align:center; margin-top:20px;" class="no-print">
+                    <button class="btn-confirm" onclick="saveAndPublishDutyTable()">💾 حفظ ونشر الجدول للجميع</button>
+                    <button class="btn-confirm" style="background:#2980b9;" onclick="printElementContent('print-area-duty')">🖨️ طباعة الجدول</button>
+                </div>
+            ` : `
+                <div style="text-align:center; margin-top:20px;" class="no-print">
+                    <button class="btn-confirm" style="background:#2980b9;" onclick="printElementContent('print-area-duty')">🖨️ طباعة الجدول</button>
+                </div>
+            `;
+
+            modalBody.innerHTML = `
+                <div id="print-area-duty">
+                    <h2 style="text-align:center; color:var(--dark-navy); margin-top:0;">سجل المناوبة اليومية المدرسية</h2>
+                    ${topHeaderButtons}
+                    ${adminDutyControls}
+                    <div class="table-scroll-container">
+                        <table>
+                            <thead>${tableHeader}</thead>
+                            <tbody>${tableRows}</tbody>
+                        </table>
+                    </div>
+                </div>
+                ${adminActionButtons}
+            `;
+        }
+
+        function saveAndPublishDutyTable() {
+            if(!isAdminAuthenticated) return;
+            let updatedCells = {};
+            DUTY_TIMES.forEach((timeStr, tIdx) => {
+                DAYS_NAMES.forEach((dayStr, dIdx) => {
+                    let cellKey = `t_${tIdx}_d_${dIdx}`;
+                    let inputEl = document.getElementById(`duty_cell_${cellKey}`);
+                    if(inputEl) {
+                        updatedCells[cellKey] = inputEl.value.trim();
+                    }
+                });
+            });
+
+            database.ref(`dutyArchives/${currentActiveDutyId}/cells`).set(updatedCells).then(() => {
+                alert("تم حفظ ونشر جدول المناوبة بنجاح وتحديثه فوراً للجميع ✅");
+            });
+        }
+
+        function switchActiveDutyTable(tableKey) {
+            if(!isAdminAuthenticated) return;
+            database.ref('currentActiveDutyId').set(tableKey).then(() => {
+                openDutyModal();
+            });
+        }
+
+        function createNewDutyTable() {
+            if(!isAdminAuthenticated) return;
+            let titleName = prompt("أدخل اسماً تمييزياً لهذا الجدول (مثال: جدول الأسبوع القادم):");
+            if(!titleName || titleName.trim() === "") return;
+
+            let newKey = "duty_" + Date.now();
+            database.ref(`dutyArchives/${newKey}`).set({
+                title: titleName.trim(),
+                cells: {}
+            }).then(() => {
+                database.ref('currentActiveDutyId').set(newKey).then(() => {
+                    alert("تم إنشاء جدول المناوبة الجديد وحفظه في الأرشيف بنجاح ✅");
+                    openDutyModal();
+                });
+            });
+        }
+
+        function deleteCurrentDutyTable() {
+            if(!isAdminAuthenticated) return;
+            let keysCount = Object.keys(dutyArchives).length;
+            if(keysCount <= 1) {
+                return alert("لا يمكنك حذف الجدول الوحيد المتبقي!");
+            }
+            if(confirm("هل أنتِ متأكدة من حذف هذا الجدول من الأرشيف نهائياً؟")) {
+                database.ref(`dutyArchives/${currentActiveDutyId}`).remove().then(() => {
+                    let remainingKeys = Object.keys(dutyArchives).filter(k => k !== currentActiveDutyId);
+                    database.ref('currentActiveDutyId').set(remainingKeys[0]).then(() => {
+                        alert("تم حذف الجدول بنجاح ✅");
+                        openDutyModal();
+                    });
+                });
+            }
+        }
+
+        // ========================================================
+        // 2. سجل جداول الحصص
+        // ========================================================
+        function openClassesMenu() {
+            activeSection = 'classes';
+            modal.style.display = 'flex';
+            let adminPanelHtml = isAdminAuthenticated ? buildClassesAdminPanel() : '';
+            let topHeaderButtons = `
+                <div style="text-align:left; display:flex; justify-content:flex-end; gap:8px;" class="no-print">
+                    <button class="edit-btn-top" onclick="closeModal()" title="العودة للصفحة الرئيسية">🏠</button>
+                    <button class="edit-btn-top" onclick="verifyAdminAction()" title="تسجيل دخول الأدمن">⚙️</button>
+                </div>`;
+            
+            modalBody.innerHTML = `
+                <h2 style="text-align:center; color:var(--dark-navy);">📅 جدول الحصص الأسبوعي والفصول الدراسية</h2>
+                ${topHeaderButtons}
+                <div id="admin-panel-container">${adminPanelHtml}</div>
+                
+                <h3 class="section-subtitle">🏫 الفصول الدراسية</h3>
+                <div id="classes-buttons-area"></div>
+                
+                <h3 class="section-subtitle">👥 كشف المعلمات والمقررات والمهمات</h3>
+                <div id="teachers-buttons-area"></div>
+                
+                <hr style="margin-top:30px;">
+                <div id="subContent"></div>
+            `;
+            renderClassesMenuButtons(); renderTeachersButtons();
+            if(isAdminAuthenticated) renderClassesAdminEditor();
+        }
+
+        function buildClassesAdminPanel() {
+            return `
+                <div id="admin-panel-classes" class="admin-panel">
+                    <h3>لوحة التحكم بمستندات وإدخال جداول المعلمات</h3>
+                    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:10px; margin-bottom:15px;">
+                        <input type="text" id="teacher-new-name" class="input-field" placeholder="اسم المعلمة">
+                        <input type="text" id="teacher-new-subject" class="input-field" placeholder="المقررات (افصلي بـ ، أو حرف و)">
+                        <input type="text" id="teacher-new-task" class="input-field" placeholder="المهمة والمسؤولية">
+                        <button class="btn-add" style="margin:5px 0 0 0;" onclick="addNewTeacherProfile()">➕ إدراج المعلمة</button>
+                    </div>
+                    <div id="admin-teachers-list-view" style="max-height:250px; overflow-y:auto; background:white; padding:10px; border-radius:6px; border:1px solid #ddd; margin-bottom:20px;"></div>
+
+                    <h3>لوحة إضافة الفصول وبيانات الطلاب</h3>
+                    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap:10px; margin-bottom:15px; align-items: center;">
+                        <input type="text" id="new-class-name" class="input-field" placeholder="اسم الصف (مثال: اول - 1)">
+                        <select id="new-class-type" class="input-field" style="margin-top:5px;"><option value="بنين">بنين</option><option value="بنات">بنات</option></select>
+                        <button class="btn-add" style="margin:5px 0 0 0;" onclick="addNewClass()">➕ إضافة الفصل للمدرسة</button>
+                    </div>
+                    <div id="admin-class-editor-area" style="max-height:550px; overflow-y:auto; padding-left:10px;"></div>
+                </div>`;
+        }
+
+        function addNewTeacherProfile() {
+            let name = document.getElementById('teacher-new-name').value.trim();
+            let subject = document.getElementById('teacher-new-subject').value.trim();
+            let task = document.getElementById('teacher-new-task').value.trim();
+            if(!name) return alert("يرجى كتابة اسم المعلمة أولاً!");
+            if(dbTeachersList[name]) return alert("هذه المعلمة مضافة بالفعل بالسيستم!");
+            
+            let teacherData = {
+                subject: subject,
+                task: task || 'لا يوجد مهمة مسندة',
+                schedule: Array.from({ length: 5 }, () => Array(6).fill("فراغ"))
+            };
+            
+            database.ref(`teachersDataList/${name}`).set(teacherData).then(() => {
+                alert(`تم إدراج المعلمة (${name}) وحفظها بنجاح بالسيرفر ✅`);
+                document.getElementById('teacher-new-name').value = '';
+                document.getElementById('teacher-new-subject').value = '';
+                document.getElementById('teacher-new-task').value = '';
+                openClassesMenu();
+            });
+        }
+
+        function updateTeacherProfile(oldName) {
+            let newName = prompt("أدخل الاسم الجديد للمعلمة:", oldName);
+            if (!newName || newName.trim() === "" || newName === oldName) return;
+            newName = newName.trim();
+
+            if (dbTeachersList[newName]) {
+                return alert("اسم المعلمة الجديد موجود مسبقاً، يرجى اختيار اسم مختلف!");
+            }
+
+            let oldData = dbTeachersList[oldName];
+            database.ref(`teachersDataList/${newName}`).set(oldData).then(() => {
+                database.ref(`teachersDataList/${oldName}`).remove().then(() => {
+                    alert("تم تحديث اسم المعلمة بنجاح ✅");
+                    openClassesMenu();
+                });
+            });
+        }
+
+        function addNewClass() {
+            let name = document.getElementById('new-class-name').value.trim(); 
+            let type = document.getElementById('new-class-type').value; 
+            if(!name) return alert("الرجاء كتابة اسم الفصل!");
+            
+            let classUniqueKey = name + "_" + type;
+            let classData = { name: name, type: type, leader: '', students: '' };
+
+            database.ref(`schoolClasses/${classUniqueKey}`).set(classData).then(() => {
+                alert(`تمت إضافة فصل (${name} ${type}) بنجاح واعتماده بالفايربيس ✅`);
+                document.getElementById('new-class-name').value = '';
+                openClassesMenu();
+            });
+        }
+
+        function deleteTeacherProfile(tName) {
+            if(confirm(`هل أنتِ متأكدة من حذف المعلمة (${tName})؟`)) {
+                database.ref(`teachersDataList/${tName}`).remove().then(() => {
+                    openClassesMenu();
+                });
+            }
+        }
+
+        function removeClass(classKey) {
+            if(confirm(`هل أنتِ متأكدة من حذف هذا الفصل؟`)) {
+                database.ref(`schoolClasses/${classKey}`).remove().then(() => {
+                    openClassesMenu();
+                });
+            }
+        }
+
+        function checkAndSaveTeacherSchedule(tName, dayIdx, periodIdx, compositeValue) {
+            let valueToSave = (compositeValue === "فراغ") ? "فراغ" : compositeValue;
+
+            if (valueToSave !== "فراغ") {
+                let targetClassKey = valueToSave.split("__")[0];
+                let dayText = DAYS_NAMES[dayIdx];
+                let periodNum = periodIdx + 1;
+                let conflictTeacher = "";
+
+                Object.keys(dbTeachersList).forEach(otherTeacher => {
+                    if (otherTeacher !== tName && dbTeachersList[otherTeacher].schedule) {
+                        let otherVal = dbTeachersList[otherTeacher].schedule[dayIdx][periodIdx];
+                        if (otherVal && otherVal !== "فراغ" && otherVal.includes("__")) {
+                            let otherClassKey = otherVal.split("__")[0];
+                            if (otherClassKey.trim() === targetClassKey.trim()) {
+                                conflictTeacher = otherTeacher;
+                            }
+                        }
+                    }
+                });
+
+                if (conflictTeacher !== "") {
+                    let classNameInfo = dbClasses[targetClassKey] ? dbClasses[targetClassKey].name + " " + dbClasses[targetClassKey].type : targetClassKey;
+                    alert(`🚨 تنبيه تعارض حصص! \n\nالفصل (${classNameInfo}) مسند بالفعل في يوم (${dayText}) الحصة (${periodNum}) للمعلمة الأخرى: (${conflictTeacher}). \n\nالرجاء اختيار فصل آخر.`);
+                    if(document.getElementById('admin-teachers-list-view')) renderAdminTeachersListView();
+                    return; 
+                }
+            }
+
+            if(!dbTeachersList[tName].schedule) {
+                dbTeachersList[tName].schedule = Array.from({ length: 5 }, () => Array(6).fill("فراغ"));
+            }
+            dbTeachersList[tName].schedule[dayIdx][periodIdx] = valueToSave;
+
+            database.ref(`teachersDataList/${tName}/schedule/${dayIdx}`).set(dbTeachersList[tName].schedule[dayIdx]).then(() => {
+                if(document.getElementById('admin-teachers-list-view')) renderAdminTeachersListView();
+                let activeClassKey = window.currentActiveOpenedClassKey;
+                if(activeClassKey && document.getElementById('print-area-class')) {
+                    viewClassDetails(activeClassKey);
+                }
+            });
+        }
+
+        function renderAdminTeachersListView() {
+            if(!isAdminAuthenticated) return; 
+            let view = document.getElementById('admin-teachers-list-view'); if(!view) return; view.innerHTML = '';
+            
+            Object.keys(dbTeachersList).forEach(tName => {
+                let prof = dbTeachersList[tName];
+                let activeQuota = calculateTeacherQuota(tName);
+                let tSchedule = prof.schedule || Array.from({ length: 5 }, () => Array(6).fill("فراغ"));
+                
+                let classSubjectOptions = `<option value="فراغ">فراغ</option>`;
+                let subjectsArray = prof.subject ? prof.subject.split(/[,،]+/).map(s => s.trim()).filter(s => s.length > 0) : ['مقرر عام'];
+
+                Object.keys(dbClasses).forEach(classKey => {
+                    let cInfo = dbClasses[classKey];
+                    subjectsArray.forEach(sub => {
+                        classSubjectOptions += `<option value="${classKey}__${sub}">${cInfo.name} ${cInfo.type} [${sub}]</option>`;
+                    });
+                });
+
+                let weekInputsHtml = '';
+                DAYS_NAMES.forEach((dayName, dayIdx) => {
+                    let periodsHtml = '';
+                    for(let p=0; p<6; p++) {
+                        if (dayIdx === 4 && (p === 4 || p === 5)) {
+                            periodsHtml += ` <div style="display:inline-block; width:15%; background:#ebf5fb; padding:4px; border:1px solid #cbd5e0; border-radius:4px; text-align:center; font-size:11px; margin-left:3px;">ح${p+1}: <b style="color:#e74c3c;">نشاط</b></div>`;
+                        } else {
+                            let currentVal = tSchedule[dayIdx][p] || 'فراغ';
+                            let displayOptionText = 'فراغ';
+                            if(currentVal && currentVal.includes("__") && currentVal.trim() !== "فراغ") {
+                                let parts = currentVal.split("__");
+                                let cKey = parts[0];
+                                let sName = parts.slice(1).join("__").trim();
+                                displayOptionText = (dbClasses[cKey] ? dbClasses[cKey].name + " " + dbClasses[cKey].type : cKey) + ` [${sName}]`;
+                            } else {
+                                currentVal = "فراغ";
+                            }
+
+                            periodsHtml += ` ح${p+1}: <select style="width:14%; padding:4px; border-radius:4px; margin-left:2px; font-size:11px;" onchange="checkAndSaveTeacherSchedule('${tName}', ${dayIdx}, ${p}, this.value)">
+                                <option value="${currentVal}">${displayOptionText}</option>
+                                ${classSubjectOptions}
+                            </select>`;
+                        }
+                    }
+                    weekInputsHtml += `<div style="margin-top:5px;"><strong>${dayName}:</strong> ${periodsHtml}</div>`;
+                });
+
+                view.innerHTML += `<div class="admin-group" style="background:#fff; border:1px solid #c5a059; margin-bottom:15px; padding-top:45px;">
+                    <button class="btn-delete-group" onclick="deleteTeacherProfile('${tName}')">حذف</button>
+                    <div class="teacher-actions-container">
+                        <button class="btn-edit-schedule" onclick="viewTeacherDetails('${tName}')">📅 تعديل الجدول</button>
+                        <button class="btn-edit-name" onclick="updateTeacherProfile('${tName}')">✏️ تعديل الاسم</button>
+                    </div>
+                    <span>👩‍🏫 <strong style="color:var(--dark-navy);">المعلمة: ${tName}</strong> | المقررات: ${prof.subject || '---'} | <span class="quota-badge">النصاب: ${activeQuota} حصة</span></span>
+                    <div style="background:#f9f9f9; padding:10px; border-radius:6px; margin-top:10px; font-size:12px;"><strong>تعبئة وتحديد مادة الحصص للأسبوع:</strong>${weekInputsHtml}</div>
+                </div>`;
+            });
+        }
+
+        function calculateTeacherQuota(tName) {
+            let count = 0;
+            if(!dbTeachersList[tName] || !dbTeachersList[tName].schedule) return 0;
+            dbTeachersList[tName].schedule.forEach((day) => {
+                day.forEach((period) => {
+                    if(period && period.includes("__") && period.trim() !== "فراغ" && period.trim() !== "نشاط" && period.trim() !== "") { 
+                        count++; 
+                    }
+                });
+            });
+            return count;
+        }
+
+        function renderClassesAdminEditor() {
+            if(!isAdminAuthenticated) return; 
+            let container = document.getElementById('admin-class-editor-area'); if(!container) return; container.innerHTML = ''; renderAdminTeachersListView();
+            let teacherOptions = `<option value="فراغ">فراغ</option>`; Object.keys(dbTeachersList).forEach(t => { teacherOptions += `<option value="${t}">${t}</option>`; });
+            Object.keys(dbClasses).forEach(classKey => {
+                let cls = dbClasses[classKey]; let div = document.createElement('div'); div.className = 'admin-group'; div.style.paddingTop = '40px';
+                div.innerHTML = `<button class="btn-delete-group" onclick="removeClass('${classKey}')">حذف</button><button class="btn-edit-group-top" onclick="viewClassDetails('${classKey}')">تعديل ✏️</button><strong>🗂️ إدارة الفصل: ${cls.name} ${cls.type}</strong><br><br><div><div><label>اختيار رائدة الفصل: </label><select class="input-field" style="width:250px; display:inline-block; margin-right:10px;" onchange="database.ref('schoolClasses/${classKey}/leader').set(this.value)"><option value="${cls.leader || ''}">${cls.leader || 'اختر رائدة الفصل'}</option>${teacherOptions}</select></div></div><br><label><strong>أسماء الطلاب/الطالبات:</strong> </label><textarea class="input-field" rows="2" onchange="database.ref('schoolClasses/${classKey}/students').set(this.value)">${cls.students || ''}</textarea>`;
+                container.appendChild(div);
+            });
+        }
+
+        function renderClassesMenuButtons() {
+            let area = document.getElementById('classes-buttons-area'); if(!area) return; area.innerHTML = '';
+            let keys = Object.keys(dbClasses);
+            if(keys.length === 0) { area.innerHTML = `<p style="color:#7f8c8d; font-size:14px; padding:5px;">لا توجد فصول مضافة حالياً.</p>`; return; }
+            keys.forEach(classKey => { 
+                let cls = dbClasses[classKey];
+                area.innerHTML += `<button class="class-nav-btn" onclick="viewClassDetails('${classKey}')">${cls.name} ${cls.type}</button>`; 
+            });
+        }
+        
+        function renderTeachersButtons() {
+            let area = document.getElementById('teachers-buttons-area'); if(!area) return; area.innerHTML = '';
+            let keys = Object.keys(dbTeachersList);
+            if(keys.length === 0) { area.innerHTML = `<p style="color:#7f8c8d; font-size:14px; padding:5px;">لا توجد معلمات مسندات حالياً.</p>`; return; }
+            keys.forEach(tName => { 
+                area.innerHTML += `<button class="class-nav-btn" style="background:#27ae60;" onclick="handleTeacherButtonClick('${tName}')"> المعلمة: ${tName}</button>`; 
+            });
+        }
+
+        function handleTeacherButtonClick(tName) {
+            if (isAdminAuthenticated) {
+                viewTeacherDetails(tName);
+            } else {
+                viewTeacherDetailsReadOnly(tName);
+            }
+        }
+
+        function viewClassDetails(classKey) {
+            window.currentActiveOpenedClassKey = classKey; 
+            const classInfo = dbClasses[classKey]; if(!classInfo) return;
+            let studentLabel = (classInfo.type === "بنات") ? "أسماء الطالبات:" : "أسماء الطلاب:";
+
+            let rowsHtml = '';
+            DAYS_NAMES.forEach((dayName, dayIdx) => {
+                let hColumns = [];
+                for(let p=0; p<6; p++) {
+                    if (dayIdx === 4 && (p === 4 || p === 5)) {
+                        hColumns.push("<b class='activity-badge'>نشاط</b>");
+                    } else {
+                        let assignedTeacher = "";
+                        let activeSubjectName = "";
+                        
+                        Object.keys(dbTeachersList).forEach(tName => {
+                            if(dbTeachersList[tName].schedule && dbTeachersList[tName].schedule[dayIdx]) {
+                                let currentVal = dbTeachersList[tName].schedule[dayIdx][p];
+                                if(currentVal && currentVal !== "فراغ" && currentVal.includes("__")) {
+                                    let parts = currentVal.split("__");
+                                    let cKey = parts[0].trim();
+                                    if(cKey === classKey.trim()) {
+                                        assignedTeacher = tName;
+                                        activeSubjectName = parts.slice(1).join("__").trim();
+                                    }
+                                }
+                            }
+                        });
+
+                        if (assignedTeacher !== "" && assignedTeacher !== "فراغ") {
+                            hColumns.push(`<div><b style="color:var(--dark-navy);">${assignedTeacher}</b></div><div style="font-size:12px; color:#c5a059; font-weight:bold; margin-top:3px;">${activeSubjectName}</div>`);
+                        } else {
+                            hColumns.push(`<span style="color:#ccc;">فراغ</span>`);
+                        }
+                    }
+                }
+                rowsHtml += `
+                    <tr>
+                        <td style="font-weight:bold; background:#edf2f7; width:100px;">${dayName}</td>
+                        <td>${hColumns[0]}</td>
+                        <td>${hColumns[1]}</td>
+                        <td>${hColumns[2]}</td>
+                        <td>${hColumns[3]}</td>
+                        <td>${hColumns[4]}</td>
+                        <td>${hColumns[5]}</td>
+                    </tr>`;
+            });
+
+            let topHeaderButtons = `
+                <div style="text-align:left; display:flex; justify-content:flex-end; gap:8px;">
+                    <button class="edit-btn-top" onclick="closeModal()" title="العودة للصفحة الرئيسية">🏠</button>
+                    <button class="edit-btn-top" onclick="verifyAdminAction()" title="تسجيل دخول الأدمن">⚙️</button>
+                </div>`;
+
+            let html = `
+              <div id="print-area-class">
+                <h2 style="text-align:center; color:var(--dark-navy); margin-top:0;">جدول الحصص الدراسي</h2>
+                ${topHeaderButtons}
+                <div class="info-box"><h3>📌 كشف جدول الحصص: ${classInfo.name} ${classInfo.type}</h3><p><strong>رائدة الصف:</strong> ${classInfo.leader || 'لم تحدد بعد'}</p><p style="background:white; padding:12px; border-radius:6px; border:1px solid #ddd;"><strong>${studentLabel}</strong><br>${classInfo.students || 'لا يوجد أسماء طلاب مدرجة.'}</p></div>
+                <h3>🗓️ جدول حصص الصف لجميع الأيام</h3>
+                <div class="table-scroll-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>اليوم</th>
+                                <th>الحصة الأولى</th>
+                                <th>الحصة الثانية</th>
+                                <th>الحصة الثالثة</th>
+                                <th>الحصة الرابعة</th>
+                                <th>الحصة الخامسة</th>
+                                <th>الحصة السادسة</th>
+                            </tr>
+                        </thead>
+                        <tbody>${rowsHtml}</tbody>
+                    </table>
+                </div>
+              </div>
+              <button class="class-nav-btn" onclick="printElementContent('print-area-class')">🖨️ طباعة جدول صف ${classInfo.name}</button>`;
+            document.getElementById('subContent').innerHTML = html;
+        }
+
+        function viewTeacherDetailsReadOnly(tName) {
+            modal.style.display = 'flex';
+            let prof = dbTeachersList[tName] || { subject: 'غير محدد', task: 'لا يوجد مهمة مسندة' };
+            let tableRowsHtml = '';
+            let tSchedule = prof.schedule || Array.from({ length: 5 }, () => Array(6).fill("فراغ"));
+
+            DAYS_NAMES.forEach((dayName, dayIdx) => {
+                let tScheduleRow = Array(6).fill("<span style='color:#ccc;'>فراغ</span>");
+
+                for(let p=0; p<6; p++) {
+                    let currentVal = tSchedule[dayIdx][p] || 'فراغ';
+                    if (currentVal && currentVal.includes("__") && currentVal.trim() !== "فراغ") {
+                        let parts = currentVal.split("__");
+                        let subNameFull = parts.slice(1).join("__").trim(); 
+                        tScheduleRow[p] = `<div style="font-weight:bold; color:var(--dark-navy);">فصل ${dbClasses[parts[0]]?.name || ''}</div><div style="font-size:12px; color:#c5a059; font-weight:bold; margin-top:3px;">${subNameFull}</div>`;
+                    }
+                }
+
+                if(dayIdx === 4) {
+                    tScheduleRow[4] = "<span class='activity-badge'>نشاط</span>";
+                    tScheduleRow[5] = "<span class='activity-badge'>نشاط</span>";
+                }
+
+                tableRowsHtml += `
+                    <tr style="background:#fff;">
+                        <td style="font-weight:bold; background:#edf2f7; width:100px;">${dayName}</td>
+                        <td>${tScheduleRow[0]}</td>
+                        <td>${tScheduleRow[1]}</td>
+                        <td>${tScheduleRow[2]}</td>
+                        <td>${tScheduleRow[3]}</td>
+                        <td>${tScheduleRow[4]}</td>
+                        <td>${tScheduleRow[5]}</td>
+                    </tr>`;
+            });
+
+            let topHeaderButtons = `
+                <div style="text-align:left; display:flex; justify-content:flex-end; gap:8px;">
+                    <button class="edit-btn-top" onclick="closeModal()" title="العودة للصفحة الرئيسية">🏠</button>
+                    <button class="edit-btn-top" onclick="verifyAdminAction()" title="تسجيل دخول الأدمن">⚙️</button>
+                </div>`;
+
+            modalBody.innerHTML = `
+                <div id="print-area-teacher">
+                    <h2 style="text-align:center; color:var(--dark-navy); margin-top:0;">جدول الحصص الدراسي</h2>
+                    ${topHeaderButtons}
+                    <div class="info-box" style="border-right-color: #27ae60;">
+                        <h3>👩‍🏫 جدول الحصص الخاص بالمعلمة: <b style="color:var(--dark-navy);">${tName}</b></h3>
+                        <p><strong>📚 المقررات التعليمية المسندة:</strong> ${prof.subject || 'غير محدد'}</p>
+                        <p><strong>🚨 المهمة والمسؤولية الإدارية:</strong> ${prof.task || 'لا يوجد مهمة مسندة'}</p>
+                    </div>
+                    <h3>🗓️ توزيع الحصص والمواد على مدار الأسبوع</h3>
+                    <div class="table-scroll-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>اليوم</th>
+                                    <th>الحصة الأولى</th>
+                                    <th>الحصة الثانية</th>
+                                    <th>الحصة الثالثة</th>
+                                    <th>الحصة الرابعة</th>
+                                    <th>الحصة الخامسة</th>
+                                    <th>الحصة السادسة</th>
+                                </tr>
+                            </thead>
+                            <tbody>${tableRowsHtml}</tbody>
+                        </table>
+                    </div>
+                </div>
+                <button class="class-nav-btn" style="background:#27ae60;" onclick="printElementContent('print-area-teacher')">🖨️ طباعة كشف المعلمة</button>`;
+        }
+
+        function viewTeacherDetails(tName) {
+            if(!isAdminAuthenticated) { viewTeacherDetailsReadOnly(tName); return; }
+            let prof = dbTeachersList[tName] || { subject: 'غير محدد', task: 'لا يوجد مهمة مسندة' };
+            let tableRowsHtml = '';
+            let tSchedule = prof.schedule || Array.from({ length: 5 }, () => Array(6).fill("فراغ"));
+            
+            let classSubjectOptions = `<option value="فراغ">فراغ</option>`;
+            let subjectsArray = prof.subject ? prof.subject.split(/[,،]+/).map(s => s.trim()).filter(s => s.length > 0) : ['مقرر عام'];
+            Object.keys(dbClasses).forEach(cKey => {
+                subjectsArray.forEach(sub => {
+                    classSubjectOptions += `<option value="${cKey}__${sub}">${dbClasses[cKey].name} ${dbClasses[cKey].type} [${sub}]</option>`;
+                });
+            });
+
+            DAYS_NAMES.forEach((dayName, dayIdx) => {
+                let tScheduleRow = Array(6).fill("<span style='color:#ccc;'>فراغ</span>");
+                let adminInputsRowHtml = ''; 
+
+                for(let p=0; p<6; p++) {
+                    let currentVal = tSchedule[dayIdx][p] || 'فراغ';
+                    if (currentVal && currentVal.includes("__") && currentVal.trim() !== "فراغ") {
+                        let parts = currentVal.split("__");
+                        let subNameFull = parts.slice(1).join("__").trim(); 
+                        tScheduleRow[p] = `<div style="font-weight:bold; color:var(--dark-navy);">فصل ${dbClasses[parts[0]]?.name || ''}</div><div style="font-size:12px; color:#c5a059; font-weight:bold; margin-top:3px;">${subNameFull}</div>`;
+                    } else {
+                        currentVal = "فراغ";
+                    }
+                    if(isAdminAuthenticated) {
+                        if (dayIdx === 4 && (p === 4 || p === 5)) {
+                            adminInputsRowHtml += `<td style="background:#f9f9f9;"><b style="color:#e74c3c; font-size:11pt;">نشاط</b></td>`;
+                        } else {
+                            let selectedSubText = 'فراغ';
+                            if(currentVal !== "فراغ" && currentVal.includes("__")) {
+                                let parts = currentVal.split("__");
+                                let subFull = parts.slice(1).join("__").trim();
+                                selectedSubText = (dbClasses[parts[0]]?.name || '') + ` [${subFull}]`;
+                            }
+                            let modifiedOptions = classSubjectOptions.replace(`value="${currentVal}"`, `value="${currentVal}" selected`);
+                            if (!modifiedOptions.includes('selected') && currentVal !== "فراغ") {
+                                modifiedOptions += `<option value="${currentVal}" selected>${selectedSubText} (الحالي)</option>`;
+                            }
+                            adminInputsRowHtml += `<td>
+                                <select style="width:100%; padding:5px; border-radius:4px; font-size:12px;" onchange="checkAndSaveTeacherSchedule('${tName}', ${dayIdx}, ${p}, this.value)">
+                                    ${modifiedOptions}
+                                </select>
+                            </td>`;
+                        }
+                    }
+                }
+
+                if(dayIdx === 4) {
+                    tScheduleRow[4] = "<span class='activity-badge'>نشاط</span>";
+                    tScheduleRow[5] = "<span class='activity-badge'>نشاط</span>";
+                }
+
+                tableRowsHtml += `
+                    <tr style="background:#fff;">
+                        <td style="font-weight:bold; background:#edf2f7; width:100px;">${dayName}</td>
+                        <td>${tScheduleRow[0]}</td>
+                        <td>${tScheduleRow[1]}</td>
+                        <td>${tScheduleRow[2]}</td>
+                        <td>${tScheduleRow[3]}</td>
+                        <td>${tScheduleRow[4]}</td>
+                        <td>${tScheduleRow[5]}</td>
+                    </tr>`;
+                
+                if(isAdminAuthenticated) {
+                    tableRowsHtml += `
+                    <tr style="background:#fff; border-bottom:2px solid var(--gold);">
+                        <td style="font-size:11px; color:#c5a059; font-weight:bold;">⚙️ خيارات الجدولة</td>
+                        ${adminInputsRowHtml}
+                    </tr>`;
+                }
+            });
+
+            let adminSubjectTaskFieldsHtml = isAdminAuthenticated ? `
+                <div class="admin-panel" style="margin-bottom:15px; padding:15px; border-color:var(--dark-navy);"><h4 style="margin:0 0 10px 0; color:var(--dark-navy);">⚙️ لوحة تعديل المقررات والمسؤولية الإدارية للمعلمة:</h4><div style="display:flex; gap:10px;"><input type="text" class="input-field" value="${prof.subject || ''}" onchange="database.ref('teachersDataList/${tName}/subject').set(this.value)"><input type="text" class="input-field" value="${prof.task || ''}" onchange="database.ref('teachersDataList/${tName}/task').set(this.value)"></div></div>` : '';
+
+            let topHeaderButtons = `
+                <div style="text-align:left; display:flex; justify-content:flex-end; gap:8px;">
+                    <button class="edit-btn-top" onclick="closeModal()" title="العودة للصفحة الرئيسية">🏠</button>
+                    <button class="edit-btn-top" onclick="verifyAdminAction()" title="تسجيل دخول الأدمن">⚙️</button>
+                </div>`;
+
+            modalBody.innerHTML = `
+                <div id="teacher-view-container-id">
+                    <h2 style="text-align:center; color:var(--dark-navy); margin-top:0;">جدول الحصص الدراسي</h2>
+                    ${topHeaderButtons}
+                    ${adminSubjectTaskFieldsHtml}
+                    <div id="print-area-teacher">
+                        <div class="info-box" style="border-right-color: #27ae60;">
+                            <h3>👩‍🏫 جدول الحصص الخاص بالمعلمة: <b style="color:var(--dark-navy);">${tName}</b></h3>
+                            <p><strong>📚 المقررات التعليمية المسندة:</strong> ${prof.subject || 'غير محدد'}</p>
+                            <p><strong>🚨 المهمة والمسؤولية الإدارية:</strong> ${prof.task || 'لا يوجد مهمة مسندة'}</p>
+                        </div>
+                        <h3>🗓️ توزيع الحصص والمواد على مدار الأسبوع</h3>
+                        <div class="table-scroll-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>اليوم</th>
+                                        <th>الحصة الأولى</th>
+                                        <th>الحصة الثانية</th>
+                                        <th>الحصة الثالثة</th>
+                                        <th>الحصة الرابعة</th>
+                                        <th>الحصة الخامسة</th>
+                                        <th>الحصة السادسة</th>
+                                    </tr>
+                                </thead>
+                                <tbody>${tableRowsHtml}</tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <button class="class-nav-btn" style="background:#27ae60;" onclick="printElementContent('print-area-teacher')">🖨️ طباعة كشف المعلمة</button>`;
+        }
+
+        function openStaffMenu() {
+            activeSection = 'staff';
+            modal.style.display = 'flex';
+            let adminPanelHtml = isAdminAuthenticated ? buildStaffAdminPanel() : '';
+            let topHeaderButtons = `
+                <div style="text-align:left; display:flex; justify-content:flex-end; gap:8px;">
+                    <button class="edit-btn-top" onclick="closeModal()" title="العودة للصفحة الرئيسية">🏠</button>
+                    <button class="edit-btn-top" onclick="verifyAdminAction()" title="تسجيل دخول الأدمن">⚙️️</button>
+                </div>`;
+
+            modalBody.innerHTML = `
+               <div id="print-area-staff">
+                <h2 style="text-align:center; color:var(--dark-navy); margin-top:0;">الطاقم التعليمي والإداري</h2>
+                ${topHeaderButtons}
+                <div id="admin-panel-container">${adminPanelHtml}</div>
+                <div class="table-scroll-container"><table><thead><tr><th>الاسم</th><th>المسمى الوظيفي</th></tr></thead><tbody id="staff-table-body"></tbody></table></div>
+               </div>
+               <button class="class-nav-btn" style="background:#2980b9; margin-top:10px;" onclick="printElementContent('print-area-staff')">🖨️ طباعة طاقم المدرسة</button>`;
+            renderStaffTableRows(); 
+            if(isAdminAuthenticated) renderStaffAdminEditor();
+        }
+
+        function buildStaffAdminPanel() { 
+            return `<div id="admin-panel-staff" class="admin-panel"><h3>لوحة الكادر الإداري والتعليمي</h3><button class="btn-add" onclick="addNewStaffRow()">➕ إضافة </button><div id="admin-staff-editor-container"></div></div>`; 
+        }
+
+        function renderStaffTableRows() { 
+            let tbody = document.getElementById('staff-table-body'); 
+            if(!tbody) return; 
+            tbody.innerHTML = ''; 
+            dbStaff.forEach((m) => { 
+                tbody.innerHTML += `<tr><td style="font-weight:bold; color:var(--dark-navy);">${m.name || '---'}</td><td>${m.title || '---'}</td></tr>`; 
+            }); 
+        }
+
+        function addNewStaffRow() { 
+            if(!dbStaff) dbStaff = []; 
+            dbStaff.push({ name: '', title: 'معلمة' }); 
+            database.ref('schoolStaff').set(dbStaff).then(() => {
+                if(isAdminAuthenticated) renderStaffAdminEditor();
+            }); 
+        }
+
+        function renderStaffAdminEditor() {
+            if(!isAdminAuthenticated) return; 
+            let container = document.getElementById('admin-staff-editor-container'); 
+            if(!container) return; 
+            container.innerHTML = '';
+            
+            dbStaff.forEach((item, idx) => {
+                container.innerHTML += `
+                <div class="admin-group">
+                    <button class="btn-delete-group" onclick="removeStaff(${idx})">حذف</button>
+                    <div>
+                        <div><label>الاسم:</label><input type="text" class="input-field" value="${item.name || ''}" onchange="dbStaff[${idx}].name=this.value; database.ref('schoolStaff').set(dbStaff); renderStaffTableRows();"></div>
+                        <div><label>المسمى الوظيفي:</label><input type="text" class="input-field" value="${item.title || ''}" onchange="dbStaff[${idx}].title=this.value; database.ref('schoolStaff').set(dbStaff); renderStaffTableRows();"></div>
+                    </div>
+                </div>`;
+            });
+        }
+
+        function removeStaff(idx) { 
+            if(confirm("حذف الموظف؟")) { 
+                dbStaff.splice(idx, 1); 
+                database.ref('schoolStaff').set(dbStaff).then(() => { 
+                    openStaffMenu(); 
+                }); 
+            } 
+        }
+
+        function openPermissionModal() {
+            activeSection = 'permission';
+            modal.style.display = 'flex';
+            let topHeaderButtons = `
+                <div style="text-align:left; display:flex; justify-content:flex-end; gap:8px;">
+                    <button class="edit-btn-top" onclick="closeModal()" title="العودة للصفحة الرئيسية">🏠</button>
+                    <button class="edit-btn-top" onclick="verifyAdminAction()" title="تسجيل دخول الأدمن">⚙️</button>
+                </div>`;
+
+            modalBody.innerHTML = `
+               <div id="print-area-permission">
+                <h2 style="text-align:center; color:var(--dark-navy); margin-top:0;">سجل الاستئذان</h2>
+                ${topHeaderButtons}
+                <div id="permission-display-area"></div>
+               </div>
+               <button class="class-nav-btn" style="background:#2980b9; margin:15px auto; display:block;" onclick="printElementContent('print-area-permission')">🖨️ طباعة كشوفات الاستئذان</button>
+            `;
+            renderPermissionUserTable();
+        }
+
+        function renderPermissionUserTable() {
+            let displayArea = document.getElementById('permission-display-area'); if(!displayArea) return; displayArea.innerHTML = '';
+            let keys = Object.keys(dbPermission); if(keys.length === 0) { displayArea.innerHTML = `<p style="text-align:center; color:#7f8c8d; padding:20px;">لا توجد كشوفات استئذان منشورة.</p>`; return; }
+            keys.reverse().forEach((key) => {
+                let kashf = dbPermission[key]; let tableRows = '';
+                if(kashf.list) { kashf.list.forEach((item) => { tableRows += `<tr><td style="font-weight:bold; color:var(--dark-navy);">${item.name || '---'}</td><td>${item.time || '---'}</td></tr>`; }); }
+                displayArea.innerHTML += `<div style="margin-bottom:40px; border-bottom:2px dashed #ccc; padding-bottom:20px;"><div class="info-box"><p style="margin:0; font-size:16px;">📅 <strong>كشف بيان استئذان منسوبي المدرسة ليوم:</strong> ${kashf.date || '---'} هـ</p></div><div class="table-scroll-container"><table><thead><tr><th>الاسم</th><th>توقيت الاستئذان</th></tr></thead><tbody>${tableRows}</tbody></table></div></div>`;
+            });
+        }
+
+        function closeModal() { 
+            modal.style.display = 'none'; 
+            isAdminAuthenticated = false; 
+            let adminMarqueeBtn = document.getElementById('marquee-admin-btn');
+            if(adminMarqueeBtn) adminMarqueeBtn.style.display = 'none';
+        }
+        window.onclick = function(event) { 
+            if (event.target == modal) {
+                closeModal();
+            } 
+        }
+    </script>
+</body>
+</html>
